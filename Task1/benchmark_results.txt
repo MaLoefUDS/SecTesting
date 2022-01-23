@@ -1,0 +1,21 @@
+[*] Running benchmark for function triangle
+[zeval] result:  ('sat', {'a': ('1', 'Int'), 'b': ('0', 'Int'), 'c': ('1', 'Int')})
+[zeval] time:  0.022221088409423828
+[reval] result:  ('sat', {'triangle_a_int_1': (780, 'Int'), 'triangle_b_int_2': (212, 'Int'), 'triangle_c_int_3': (780, 'Int')})
+[reval] time:  0.6411070823669434
+Benchmark 1 passed
+
+[*] Running benchmark for function string_cmp_test
+[zeval] result:  ('sat', {'x': ('hi', 'String')})
+[zeval] time:  0.020755290985107422
+[reval] result:  ('sat', {'string_cmp_test_x_str_1': ('hi', 'String')})
+[reval] time:  0.40443992614746094
+Benchmark 2 passed
+
+[*] Running benchmark for function arithmetic_test
+[zeval] result:  ('sat', {'a': ('500', 'Int'), 'b': ('0', 'Int')})
+[zeval] time:  0.020778656005859375
+[reval] result:  ('sat', {'arithmetic_test_a_int_1': (78, 'Int'), 'arithmetic_test_b_int_2': (211, 'Int')})
+[reval] time:  1.9179539680480957
+Benchmark 3 passed
+
