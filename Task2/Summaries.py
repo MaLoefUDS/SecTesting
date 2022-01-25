@@ -23,27 +23,22 @@ class zstr(zstr):
     def on_all(self, cond) -> zbool:
         z3s = list()
         pys = list()
-        for char in self:
-            z3_cond, py_cond = cond(char)
+        for i in range(len(self)):
+            z3_cond, py_cond = cond(self[i])
             z3s.append(z3_cond)
             pys.append(py_cond)
         return zbool(self.context, z3.And(z3s), all(pys))
 
     def in_range(self, start, end):
-        def check_include(char):
-            ordinal = zint(self.context, z3.IntVal(ord(char)), ord(char))
-            z3_cond = z3.And([(ordinal >= start).z, (ordinal <= end).z])
-            py_cond = start <= ordinal.v <= end
-            return z3_cond, py_cond
-        return self.on_all(check_include)
+        _set = "".join([chr(i) for i in range(start, end)])
+        return self.in_set(_set)
 
     def in_set(self, _set):
         def check_include(char):
-            ordinal = zint(self.context, z3.IntVal(ord(char)), ord(char))
             z3s = list()
             pys = list()
             for elem in _set:
-                cond = (ordinal == elem)
+                cond = (char == elem)
                 z3s.append(cond.z)
                 pys.append(cond.v)
             return z3.Or(z3s), any(pys)
@@ -71,7 +66,7 @@ class zstr(zstr):
                      any([is_dec.v, is_dig.v, is_num.v]))
 
     def isdecimal(self) -> zbool:
-        return self.in_range(ord("0"), ord("9"))
+        return self.in_set(string.digits)
 
     def isdigit(self) -> zbool:
         pass  # TODO: Implement me
