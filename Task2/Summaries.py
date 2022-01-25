@@ -7,6 +7,9 @@ class zint(zint):
         pass # TODO: Implement me
 
 class zstr(zstr):
+    def __len__(self): # Do not change me
+        return self._len
+
     def __contains__(self, m: str) -> zbool:
         no_match = zint(self.context, z3.IntVal(-1), -1)
         find = self.find(m)
@@ -15,7 +18,7 @@ class zstr(zstr):
     def capitalize(self) -> zstr:
         pass # TODO: Implement me
 
-    def endswith(self, other: zstr, start: int, stop: int) -> zbool:
+    def endswith(self, other: zstr, start: int = None, stop: int = None) -> zbool:
         assert start is None, 'No need to handle this parameter'
         assert stop is None, 'No need to handle this parameter'
         len_self = z3.Length(self.z)
@@ -63,7 +66,7 @@ class zstr(zstr):
             return z3_cond, py_cond
         return self.on_all(upper_check)
 
-    def rfind(self, sub: str, start: int, stop:int) -> zint:
+    def rfind(self, sub: str, start: int = None, stop: int = None) -> zint:
         assert start is None, 'No need to handle this parameter'
         assert stop is None, 'No need to handle this parameter'
         pass # TODO: Implement me
