@@ -6,7 +6,10 @@ from fuzzingbook.ConcolicFuzzer import zstr, zint, zbool, fresh_name, ConcolicTr
 
 class zint(zint):
     def __abs__(self) -> zint:
-        pass # TODO: Implement me
+        if self < 0:
+            return zint(self.context, self.z * -1, self.v * -1)
+        else:
+            return self
 
 class zstr(zstr):
     def __len__(self): # Do not change me
