@@ -1,8 +1,9 @@
 import string
 
-import z3
 import fuzzingbook.ConcolicFuzzer
-from fuzzingbook.ConcolicFuzzer import zstr, zint, zbool, fresh_name, ConcolicTracer
+import z3
+from fuzzingbook.ConcolicFuzzer import zstr, zint, zbool, ConcolicTracer
+
 
 class zint(zint):
     def __abs__(self) -> zint:
@@ -11,8 +12,9 @@ class zint(zint):
         else:
             return self
 
+
 class zstr(zstr):
-    def __len__(self): # Do not change me
+    def __len__(self):  # Do not change me
         return self._len
 
     def __contains__(self, m: str) -> zbool:
@@ -42,20 +44,22 @@ class zstr(zstr):
                 z3s.append(cond.z)
                 pys.append(cond.v)
             return z3.Or(z3s), any(pys)
+
         return self.on_all(check_include)
 
     def capitalize(self) -> zstr:
-        pass # TODO: Implement me
+        pass  # TODO: Implement me
 
     def endswith(self, other: zstr, start: int = None, stop: int = None) -> zbool:
         assert start is None, 'No need to handle this parameter'
         assert stop is None, 'No need to handle this parameter'
+
+        z, v = self._zv(other)
         len_self = z3.Length(self.z)
-        len_suffix = z3.Length(other.z)
-        diff = zint(self.context, len_self - len_suffix, len(self.v) - len(other.v))
-        if diff < 0:
-            return zbool(self.context, diff < 0, diff.v < 0)
-        return zbool(self.context, self.startswith(other, beg=diff.v).z, self.v.startswith(other.v, diff.v))
+        len_suffix = z3.Length(z)
+        diff = zint(self.context, len_self - len_suffix, len(self.v) - len(v))
+        r = z3.IndexOf(self.z, z, diff)
+        return zbool(self.context, z3.And(r == diff, (diff >= 0).z), self.v.endswith(v) and diff.v >= 0)
 
     def isalnum(self) -> zbool:
         is_dec = self.isdecimal()
@@ -75,14 +79,14 @@ class zstr(zstr):
         return self.in_range(ord("a"), ord("z"))
 
     def isnumeric(self) -> zbool:
-        pass # TODO: Implement me
+        pass  # TODO: Implement me
 
     def isprintable(self) -> zbool:
         return self.in_set(string.printable)
 
     def isspace(self) -> zbool:
         _set = [" ", "\t", "\n"]
-        pass # TODO: Implement me
+        pass  # TODO: Implement me
 
     def isupper(self) -> zbool:
         return self.in_range(ord("A"), ord("Z"))
@@ -90,20 +94,19 @@ class zstr(zstr):
     def rfind(self, sub: str, start: int = None, stop: int = None) -> zint:
         assert start is None, 'No need to handle this parameter'
         assert stop is None, 'No need to handle this parameter'
-        pass # TODO: Implement me
+        pass  # TODO: Implement me
 
     def swapcase(self) -> zstr:
-        pass # TODO: Implement me
+        pass  # TODO: Implement me
 
     def title(self) -> zstr:
-        pass # TODO: Implement me
-
+        pass  # TODO: Implement me
 
 
 def setup_summary():
     fuzzingbook.ConcolicFuzzer.__dict__['zstr'] = zstr
     fuzzingbook.ConcolicFuzzer.__dict__['zint'] = zint
-    fuzzingbook.ConcolicFuzzer.Z3_OPTIONS = '-T:5' # Set solver timeout to 5 seconds. Might be possible to reduce this given a strong CPU, or must be increased with a weak CPU.
+    fuzzingbook.ConcolicFuzzer.Z3_OPTIONS = '-T:5'  # Set solver timeout to 5 seconds. Might be possible to reduce this given a strong CPU, or must be increased with a weak CPU.
 
 
 if __name__ == "__main__":
@@ -121,4 +124,3 @@ if __name__ == "__main__":
         assert not empty.isupper(), "isupper failed"
         assert string4.isupper(), "isupper failed"
         print("passed all tests")
-
