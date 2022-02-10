@@ -16,7 +16,7 @@ def test_summary_endswith():
 
     with ConcolicTracer() as _:
         #_[string_startswith_test]('Hello')
-        _[string_endswith_test]('Hello')
+        _[string_endswith_test]('Hello Detlef du Banana')
 
     print(f"{_.path=}")
     new_path = _.path[0:-1] + [z3.Not(_.path[-1])]

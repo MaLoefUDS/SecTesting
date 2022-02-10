@@ -58,8 +58,19 @@ class zstr(zstr):
         len_self = z3.Length(self.z)
         len_suffix = z3.Length(z)
         diff = zint(self.context, len_self - len_suffix, len(self.v) - len(v))
-        r = z3.IndexOf(self.z, z, diff)
-        return zbool(self.context, z3.And(r == diff, (diff >= 0).z), self.v.endswith(v) and diff.v >= 0)
+        length_constraint = zbool(self.context, (diff >= 0).z, diff.v >= 0)
+        equal_constraint = zbool(self.context, z3.BoolVal(False), False)
+
+        z3s = list()
+        pys = list()
+        if diff.v >= 0:
+            for i in range(len(v)):
+                cond = (self[-i - 1] == v[-i - 1])
+                z3s.append(cond.z)
+                pys.append(cond.v)
+            equal_constraint = zbool(self.context, z3.And(z3s), all(pys))
+
+        return zbool(self.context, z3.And([length_constraint.z, equal_constraint.z]), self.v.endswith(v))
 
     def isalnum(self) -> zbool:
         is_dec = self.isdecimal()
