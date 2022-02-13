@@ -65,7 +65,7 @@ class zstr(zstr):
         pys = list()
         if diff.v >= 0:
             for i in range(len(v)):
-                cond = (self[-i - 1] == v[-i - 1])
+                cond = (self[diff.v + i] == v[i])
                 z3s.append(cond.z)
                 pys.append(cond.v)
             equal_constraint = zbool(self.context, z3.And(z3s), all(pys))
