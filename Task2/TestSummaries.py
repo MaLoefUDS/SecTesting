@@ -140,6 +140,10 @@ def test_summary_isprintable():
         return True
     return False
 
+def reformat_utf(s):
+    import re
+    return re.sub(r'\\u\{([0-9a-fA-F]{1,4})\}', lambda x: chr(int(x.group(1), 16)), s)
+
 def test_summary_isspace():
     print('[*] Testing the function summary for isspace')
 
@@ -152,7 +156,8 @@ def test_summary_isspace():
     new_.fn_args = _.fn_args
 
     result = new_.zeval()
-    if result[0] == 'sat' and result[1]['x'][0].isspace():
+    print(result)
+    if result[0] == 'sat' and reformat_utf(result[1]['x'][0]).isspace():
         return True
     return False
 

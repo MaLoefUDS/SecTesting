@@ -73,12 +73,14 @@ class zstr(zstr):
         return zbool(self.context, z3.And([length_constraint.z, equal_constraint.z]), self.v.endswith(v))
 
     def isalnum(self) -> zbool:
+        is_alp = self.isalpha()
         is_dec = self.isdecimal()
         is_dig = self.isdigit()
         is_num = self.isnumeric()
+        nempty = self.length() > 0
         return zbool(self.context,
-                     z3.Or([is_dec.z, is_dig.z, is_num.z]),
-                     any([is_dec.v, is_dig.v, is_num.v]))
+                     z3.Or([is_alp.z, is_dec.z, is_dig.z, is_num.z, nempty.z]),
+                     any([is_alp.v, is_dec.v, is_dig.v, is_num.v, nempty.v]))
 
     def isdecimal(self) -> zbool:
         return self.in_set(string.digits)
@@ -96,8 +98,7 @@ class zstr(zstr):
         return self.in_set(string.printable)
 
     def isspace(self) -> zbool:
-        _set = [" ", "\t", "\n"]
-        pass  # TODO: Implement me
+        return self.in_set(string.whitespace)
 
     def isupper(self) -> zbool:
         return self.in_range(ord("A"), ord("Z"))
