@@ -73,26 +73,40 @@ class zstr(zstr):
         return zbool(self.context, z3.And([length_constraint.z, equal_constraint.z]), self.v.endswith(v))
 
     def isalnum(self) -> zbool:
-        is_alp = self.isalpha()
-        is_dec = self.isdecimal()
-        is_dig = self.isdigit()
-        is_num = self.isnumeric()
-        nempty = self.length() > 0
-        return zbool(self.context,
-                     z3.Or([is_alp.z, is_dec.z, is_dig.z, is_num.z, nempty.z]),
-                     any([is_alp.v, is_dec.v, is_dig.v, is_num.v, nempty.v]))
+        not_empty = self.length() > 0
+        if not_empty:
+            z3s = list()
+            pys = list()
+            for i in range(len(self)):
+                is_alpha = self[i].isalpha()
+                # isdecimal and isnumeric uses isdigit, as we only considered ASCII-Characters
+                is_digit = self[i].isdigit()
+                z3s.append(z3.Or([is_alpha.z, is_digit.z]))
+                pys.append(is_alpha.v or is_digit.v)
+            return zbool(self.context, z3.And(z3s), all(pys))
+        else:
+            return zbool(self.context, not_empty, False)
+
+    def isalpha(self) -> zbool:
+        not_empty = self.length() > 0
+        is_alpha = self.in_set(string.ascii_letters)
+        return zbool(self.context, z3.And([not_empty.z, is_alpha.z]), not_empty and is_alpha.v)
 
     def isdecimal(self) -> zbool:
-        return self.in_set(string.digits)
+        not_empty = self.length() > 0
+        is_decimal = self.in_set(string.digits)
+        return zbool(self.context, z3.And([not_empty.z, is_decimal.z]), not_empty and is_decimal.v)
 
     def isdigit(self) -> zbool:
-        pass  # TODO: Implement me
+        # We only consider ASCII-Characters therefore isdecimal is enough
+        return self.isdecimal()
 
     def islower(self) -> zbool:
         return self.in_range(ord("a"), ord("z"))
 
     def isnumeric(self) -> zbool:
-        pass  # TODO: Implement me
+        # We only consider ASCII-Characters therefore isdecimal is enough
+        return self.isdecimal()
 
     def isprintable(self) -> zbool:
         return self.in_set(string.printable)
