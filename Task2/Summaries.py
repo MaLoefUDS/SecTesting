@@ -2,7 +2,7 @@ import string
 
 import fuzzingbook.ConcolicFuzzer
 import z3
-from fuzzingbook.ConcolicFuzzer import zstr, zint, zbool, ConcolicTracer
+from fuzzingbook.ConcolicFuzzer import zstr, zint, zbool, ConcolicTracer, fresh_name, zord, zchr
 
 
 class zint(zint):
@@ -53,24 +53,16 @@ class zstr(zstr):
     def endswith(self, other: zstr, start: int = None, stop: int = None) -> zbool:
         assert start is None, 'No need to handle this parameter'
         assert stop is None, 'No need to handle this parameter'
-
+        # IDEA:
+        # Len(self) >= Len(other)
+        # for i in range(len(other)):
+        #    INDEX = Len(self) - Len(other) + i
+        #    self[INDEX] == other[i]
+        # These Constraints
         z, v = self._zv(other)
-        len_self = z3.Length(self.z)
-        len_suffix = z3.Length(z)
-        diff = zint(self.context, len_self - len_suffix, len(self.v) - len(v))
-        length_constraint = zbool(self.context, (diff >= 0).z, diff.v >= 0)
-        equal_constraint = zbool(self.context, z3.BoolVal(False), False)
 
-        z3s = list()
-        pys = list()
-        if diff.v >= 0:
-            for i in range(len(v)):
-                cond = (self[diff.v + i] == v[i])
-                z3s.append(cond.z)
-                pys.append(cond.v)
-            equal_constraint = zbool(self.context, z3.And(z3s), all(pys))
+        return zbool(self.context, z3.SuffixOf(z, self.z), self.v.endswith(v))
 
-        return zbool(self.context, z3.And([length_constraint.z, equal_constraint.z]), self.v.endswith(v))
 
     def isalnum(self) -> zbool:
         not_empty = self.length() > 0
@@ -123,7 +115,32 @@ class zstr(zstr):
         pass  # TODO: Implement me
 
     def swapcase(self) -> zstr:
-        pass  # TODO: Implement me
+        #TODO fix this shit
+        empty = ""
+        ne = 'empty_%d' % fresh_name()
+        result = zstr.create(self.context, ne, empty)
+        self.context[1].append(z3.StringVal(empty) == result.z)
+        cdiff = (ord('a') - ord('A'))
+        for i in self:
+            oz = zord(self.context, i.z)
+            uz_lower = zchr(self.context, oz + cdiff)
+            rz_lower = z3.And([oz >= ord('A'), oz <= ord('Z')])
+            uz_upper = zchr(self.context, oz - cdiff)
+            rz_upper = z3.And([oz >= ord('a'), oz <= ord('z')])
+            ov = ord(i.v)
+            uv_lower = chr(ov + cdiff)
+            uv_upper = chr(ov - cdiff)
+            rv_lower = ov >= ord('A') and ov <= ord('Z')
+            rv_upper = ov >= ord('a') and ov <= ord('z')
+            if zbool(self.context, rz_lower, rv_lower):
+                i = zstr(self.context, uz_lower, uv_lower)
+            elif zbool(self.context, rz_upper, rv_upper):
+                i = zstr(self.context, uz_upper, uv_upper)
+            else:
+                i = zstr(self.context, i.z, i.v)
+            result = result + i
+        print(result)
+        return result
 
     def title(self) -> zstr:
         pass  # TODO: Implement me
