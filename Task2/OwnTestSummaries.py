@@ -5,7 +5,8 @@ import z3
 from fuzzingbook.ConcolicFuzzer import ConcolicTracer
 
 import Summaries  # In final project
-from summary_samples.string_endswith import *
+from summary_samples.string_endswith import string_endswith_test
+from summary_samples.string_isupper import string_isupper_test
 
 
 # import Summaries_Solution as Summaries # For testing during development
@@ -33,9 +34,27 @@ def test_summary_endswith():
         return True
     return False
 
+def test_summary_isupper():
+    print('[*] Testing the function summary for isupper')
+
+    with ConcolicTracer() as _:
+        _[string_isupper_test]('ui#a')
+
+
+    new_path = _.path[0:-1] + [z3.Not(_.path[-1])]
+    new_ = ConcolicTracer((_.decls, new_path))
+    new_.fn = _.fn
+    new_.fn_args = _.fn_args
+
+    result = new_.zeval()
+    if result[0] == 'sat' and result[1]['x'][0].isupper():
+        return True
+    return False
+
 
 summary_dict = {
-    'endswith': test_summary_endswith
+    'endswith': test_summary_endswith,
+    'isupper': test_summary_isupper
 }
 
 

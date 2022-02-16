@@ -136,7 +136,22 @@ class zstr(zstr):
         return self.in_set(string.whitespace)
 
     def isupper(self) -> zbool:
-        return self.in_range(ord("A"), ord("Z"))
+        # Return True if there is at least one uppercase alphabetic ASCII character in the sequence
+        # and no lowercase ASCII characters,
+        # False otherwise.
+        not_empty = self.length() > 0
+        if not_empty:
+            z3s_or = list()
+            z3s_and = list()
+            for c in self:
+                is_upper = c.in_set(string.ascii_uppercase)
+                z3s_or.append(is_upper.z)
+                is_lower = c.in_set(string.ascii_lowercase)
+                not_is_lower = z3.Not(is_lower.z)
+                z3s_and.append(not_is_lower)
+            return zbool(self.context, z3.And([z3.And(z3s_and), z3.Or(z3s_or)]), self.v.isupper())
+        else:
+            return zbool(self.context, not_empty, False)
 
     def rfind(self, sub: str, start: int = None, stop: int = None) -> zint:
         assert start is None, 'No need to handle this parameter'
@@ -177,13 +192,64 @@ class zstr(zstr):
         return result
 
     def title(self) -> zstr:
-        pass  # TODO: Implement me
+        # TODO fix this shit, constraints not working / solvable
+        # Every word starts with a capital letter
+        empty = ""
+        ne = 'empty_%d' % fresh_name()
+        result = zstr.create(self.context, ne, empty)
+        # Don't know what this line does 🤔
+        self.context[1].append(z3.StringVal(empty) == result.z)
+        cdiff = (ord('a') - ord('A'))
+
+        new_word = True
+        for index, i in enumerate(self):
+            oz = zord(self.context, i.z)
+            ov = ord(i.v)
+            # If the current character is a letter:
+            #   - If it is the first letter of a word, make it uppercase -> new_word = False
+            #   - If it is not the first letter of a word, make it lowercase
+            # Else:
+            #   - Do nothing -> new_word = True
+            #
+            # Bisher funktioniert das nicht, liegt eventuell wieder daran, dass die Constraint nicht "flexibel" sind
+
+            rz_letter = z3.Or(z3.And([oz >= ord('a'), oz <= ord('z')]),
+                              z3.And([oz >= ord('A'), oz <= ord('Z')]))
+            rv_letter = (ord('a') <= ov <= ord('z')) or (ord('A') <= ov <= ord('Z'))
+            if zbool(self.context, rz_letter, rv_letter):
+                if new_word:
+                    uz = zchr(self.context, oz - cdiff)
+                    rz = z3.And([oz >= ord('a'), oz <= ord('z')])
+                    uv = chr(ov - cdiff)
+                    rv = ord('a') <= ov <= ord('z')
+                    if zbool(self.context, rz, rv):
+                        i = zstr(self.context, uz, uv)
+                    else:
+                        i = zstr(self.context, i.z, i.v)
+                    new_word = False
+                else:
+                    uz = zchr(self.context, oz + cdiff)
+                    rz = z3.And([oz >= ord('A'), oz <= ord('Z')])
+                    uv = chr(ov + cdiff)
+                    rv = ord('A') <= ov <= ord('Z')
+                    if zbool(self.context, rz, rv):
+                        i = zstr(self.context, uz, uv)
+                    else:
+                        i = zstr(self.context, i.z, i.v)
+            else:
+                i = zstr(self.context, i.z, i.v)
+                new_word = True
+
+            result = result + i
+
+        print(f"{self} -> {result}")
+        return result
 
 
 def setup_summary():
     fuzzingbook.ConcolicFuzzer.__dict__['zstr'] = zstr
     fuzzingbook.ConcolicFuzzer.__dict__['zint'] = zint
-    fuzzingbook.ConcolicFuzzer.Z3_OPTIONS = '-T:10'  # Set solver timeout to 5 seconds. Might be possible to reduce this given a strong CPU, or must be increased with a weak CPU.
+    fuzzingbook.ConcolicFuzzer.Z3_OPTIONS = '-T:5'  # Set solver timeout to 5 seconds. Might be possible to reduce this given a strong CPU, or must be increased with a weak CPU.
 
 
 if __name__ == "__main__":
@@ -192,6 +258,7 @@ if __name__ == "__main__":
         string2 = zstr(_.context, z3.String("string_2"), "World")
         string3 = zstr(_.context, z3.String("string_3"), "Work")
         string4 = zstr(_.context, z3.String("string_4"), "WORK")
+        string5 = zstr(_.context, z3.String("string_5"), "A#")
         empty = zstr(_.context, z3.String("empty"), " ")
         assert "Hello" in string1, "__contains__ failed"
         assert "Help" not in string1, "__contains__ failed"
@@ -200,4 +267,5 @@ if __name__ == "__main__":
         assert not string3.isupper(), "isupper failed"
         assert not empty.isupper(), "isupper failed"
         assert string4.isupper(), "isupper failed"
+        assert string5.isupper(), "isupper failed"
         print("passed all tests")
