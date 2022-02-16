@@ -1,5 +1,5 @@
-def string_capitalize_test(x): # x should be "solution"
+def string_capitalize_test(x):
     if len(x) > 0:
-        if x.capitalize() == 'Solution':
+        if x.capitalize() == 'Sol ution':
             print('yay')
 

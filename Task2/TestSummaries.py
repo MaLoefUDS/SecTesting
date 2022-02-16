@@ -164,7 +164,6 @@ def test_summary_isspace():
     new_.fn_args = _.fn_args
 
     result = new_.zeval()
-    print(result)
     if result[0] == 'sat' and reformat_utf(result[1]['x'][0]).isspace():
         return True
     return False
@@ -174,7 +173,7 @@ def test_summary_swapcase():
     print('[*] Testing the function summary for swapcase')
 
     with ConcolicTracer() as _:
-        _[string_swapcase_test]('AaBb')
+        _[string_swapcase_test]('aaaa')
 
     new_path = _.path[0:-1] + [z3.Not(_.path[-1])]
     new_ = ConcolicTracer((_.decls, new_path))
@@ -182,7 +181,7 @@ def test_summary_swapcase():
     new_.fn_args = _.fn_args
 
     result = new_.zeval()
-    if result[0] == 'sat' and result[1]['x'][0] == 'aAbB':
+    if result[0] == 'sat' and result[1]['x'][0] == 'AaBb':
         return True
     return False
 
@@ -191,7 +190,7 @@ def test_summary_title():
     print('[*] Testing the function summary for title')
 
     with ConcolicTracer() as _:
-        _[string_title_test]('Hello world')
+        _[string_title_test]('aaaaabaaaaa')
 
     new_path = _.path[0:-1] + [z3.Not(_.path[-1])]
     new_ = ConcolicTracer((_.decls, new_path))
@@ -199,7 +198,7 @@ def test_summary_title():
     new_.fn_args = _.fn_args
 
     result = new_.zeval()
-    if result[0] == 'sat' and result[1]['x'][0] == 'Hello World':
+    if result[0] == 'sat' and result[1]['x'][0].lower() == 'hello world':
         return True
     return False
 
@@ -208,7 +207,7 @@ def test_summary_capitalize():
     print('[*] Testing the function summary for capitalize')
 
     with ConcolicTracer() as _:
-        _[string_capitalize_test]('solution')
+        _[string_capitalize_test]('aaabaaaaa')
 
     new_path = _.path[0:-1] + [z3.Not(_.path[-1])]
     new_ = ConcolicTracer((_.decls, new_path))
@@ -216,7 +215,7 @@ def test_summary_capitalize():
     new_.fn_args = _.fn_args
 
     result = new_.zeval()
-    if result[0] == 'sat' and result[1]['x'][0] == 'Solution':
+    if result[0] == 'sat' and result[1]['x'][0].lower() == 'sol ution':
         return True
     return False
 
@@ -225,7 +224,7 @@ def test_summary_rfind():
     print('[*] Testing the function summary for rfind')
 
     with ConcolicTracer() as _:
-        _[string_rfind_test]('haybeedlehay', 'needle')
+        _[string_rfind_test]('haybeedlehay')
 
     new_path = _.path[0:-1] + [z3.Not(_.path[-1])]
     new_ = ConcolicTracer((_.decls, new_path))
@@ -233,7 +232,7 @@ def test_summary_rfind():
     new_.fn_args = _.fn_args
 
     result = new_.zeval()
-    if result[0] == 'sat' and result[1]['x'][0].contains('needle'):
+    if result[0] == 'sat' and 'needle' in result[1]['x'][0]:
         return True
     return False
 

@@ -14,7 +14,7 @@ class zint(zint):
 
 
 class zstr(zstr):
-    def __len__(self):  # Do not change me
+    def __len__(self): # Do not change me
         return self._len
 
     def __contains__(self, m: str) -> zbool:
@@ -149,7 +149,7 @@ class zstr(zstr):
 def setup_summary():
     fuzzingbook.ConcolicFuzzer.__dict__['zstr'] = zstr
     fuzzingbook.ConcolicFuzzer.__dict__['zint'] = zint
-    fuzzingbook.ConcolicFuzzer.Z3_OPTIONS = '-T:5'  # Set solver timeout to 5 seconds. Might be possible to reduce this given a strong CPU, or must be increased with a weak CPU.
+    fuzzingbook.ConcolicFuzzer.Z3_OPTIONS = '-T:5' # Set solver timeout to 5 seconds. Might be possible to reduce this given a strong CPU, or must be increased with a weak CPU.
 
 
 if __name__ == "__main__":
