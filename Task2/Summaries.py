@@ -14,7 +14,7 @@ class zint(zint):
 
 
 class zstr(zstr):
-    def __len__(self): # Do not change me
+    def __len__(self):  # Do not change me
         return self._len
 
     def __contains__(self, m: str) -> zbool:
@@ -48,7 +48,37 @@ class zstr(zstr):
         return self.on_all(check_include)
 
     def capitalize(self) -> zstr:
-        pass  # TODO: Implement me
+        # First letter is uppercase, the rest is lowercase
+        empty = ""
+        ne = 'empty_%d' % fresh_name()
+        result = zstr.create(self.context, ne, empty)
+        # Don't know what this line does 🤔
+        self.context[1].append(z3.StringVal(empty) == result.z)
+
+        cdiff = (ord('a') - ord('A'))
+        for index, i in enumerate(self):
+            oz = zord(self.context, i.z)
+            ov = ord(i.v)
+            if index == 0:
+                uz = zchr(self.context, oz - cdiff)
+                rz = z3.And([oz >= ord('a'), oz <= ord('z')])
+                uv = chr(ov - cdiff)
+                rv = ord('a') <= ov <= ord('z')
+                if zbool(self.context, rz, rv):
+                    i = zstr(self.context, uz, uv)
+                else:
+                    i = zstr(self.context, i.z, i.v)
+            else:
+                uz = zchr(self.context, oz + cdiff)
+                rz = z3.And([oz >= ord('A'), oz <= ord('Z')])
+                uv = chr(ov + cdiff)
+                rv = ord('A') <= ov <= ord('Z')
+                if zbool(self.context, rz, rv):
+                    i = zstr(self.context, uz, uv)
+                else:
+                    i = zstr(self.context, i.z, i.v)
+            result += i
+        return result
 
     def endswith(self, other: zstr, start: int = None, stop: int = None) -> zbool:
         assert start is None, 'No need to handle this parameter'
@@ -62,7 +92,6 @@ class zstr(zstr):
         z, v = self._zv(other)
 
         return zbool(self.context, z3.SuffixOf(z, self.z), self.v.endswith(v))
-
 
     def isalnum(self) -> zbool:
         not_empty = self.length() > 0
@@ -115,7 +144,7 @@ class zstr(zstr):
         pass  # TODO: Implement me
 
     def swapcase(self) -> zstr:
-        #TODO fix this shit
+        # TODO fix this shit, constraints not working / solvable
         empty = ""
         ne = 'empty_%d' % fresh_name()
         result = zstr.create(self.context, ne, empty)
@@ -123,21 +152,26 @@ class zstr(zstr):
         cdiff = (ord('a') - ord('A'))
         for i in self:
             oz = zord(self.context, i.z)
-            uz_lower = zchr(self.context, oz + cdiff)
-            rz_lower = z3.And([oz >= ord('A'), oz <= ord('Z')])
-            uz_upper = zchr(self.context, oz - cdiff)
-            rz_upper = z3.And([oz >= ord('a'), oz <= ord('z')])
             ov = ord(i.v)
-            uv_lower = chr(ov + cdiff)
-            uv_upper = chr(ov - cdiff)
-            rv_lower = ov >= ord('A') and ov <= ord('Z')
-            rv_upper = ov >= ord('a') and ov <= ord('z')
-            if zbool(self.context, rz_lower, rv_lower):
-                i = zstr(self.context, uz_lower, uv_lower)
-            elif zbool(self.context, rz_upper, rv_upper):
-                i = zstr(self.context, uz_upper, uv_upper)
+
+            rz_lower = z3.And([oz >= ord('A'), oz <= ord('Z')])
+            rz_upper = z3.And([oz >= ord('a'), oz <= ord('z')])
+
+            rv_lower = ord('A') <= ov <= ord('Z')
+            rv_upper = ord('a') <= ov <= ord('z')
+            if rv_lower:
+                if zbool(self.context, rz_lower, rv_lower):
+                    uz_lower = zchr(self.context, oz + cdiff)
+                    uv_lower = chr(ov + cdiff)
+                    i = zstr(self.context, uz_lower, uv_lower)
+            elif rv_upper:
+                if zbool(self.context, rz_upper, rv_upper):
+                    uz_upper = zchr(self.context, oz - cdiff)
+                    uv_upper = chr(ov - cdiff)
+                    i = zstr(self.context, uz_upper, uv_upper)
             else:
                 i = zstr(self.context, i.z, i.v)
+
             result = result + i
         print(result)
         return result
@@ -149,7 +183,7 @@ class zstr(zstr):
 def setup_summary():
     fuzzingbook.ConcolicFuzzer.__dict__['zstr'] = zstr
     fuzzingbook.ConcolicFuzzer.__dict__['zint'] = zint
-    fuzzingbook.ConcolicFuzzer.Z3_OPTIONS = '-T:5' # Set solver timeout to 5 seconds. Might be possible to reduce this given a strong CPU, or must be increased with a weak CPU.
+    fuzzingbook.ConcolicFuzzer.Z3_OPTIONS = '-T:10'  # Set solver timeout to 5 seconds. Might be possible to reduce this given a strong CPU, or must be increased with a weak CPU.
 
 
 if __name__ == "__main__":
