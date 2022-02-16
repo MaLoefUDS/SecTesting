@@ -90,7 +90,6 @@ class zstr(zstr):
         #    self[INDEX] == other[i]
         # These Constraints
         z, v = self._zv(other)
-
         return zbool(self.context, z3.SuffixOf(z, self.z), self.v.endswith(v))
 
     def isalnum(self) -> zbool:
@@ -156,7 +155,8 @@ class zstr(zstr):
     def rfind(self, sub: str, start: int = None, stop: int = None) -> zint:
         assert start is None, 'No need to handle this parameter'
         assert stop is None, 'No need to handle this parameter'
-        pass  # TODO: Implement me
+        z, v = self._zv(sub)
+        return zint(self.context, z3.LastIndexOf(self.z, z), self.v.rfind(v))
 
     def swapcase(self) -> zstr:
         # TODO fix this shit, constraints not working / solvable
