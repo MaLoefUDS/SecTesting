@@ -138,19 +138,7 @@ class zstr(zstr):
         # Return True if there is at least one uppercase alphabetic ASCII character in the sequence
         # and no lowercase ASCII characters,
         # False otherwise.
-        not_empty = self.length() > 0
-        if not_empty:
-            z3s_or = list()
-            z3s_and = list()
-            for c in self:
-                is_upper = c.in_set(string.ascii_uppercase)
-                z3s_or.append(is_upper.z)
-                is_lower = c.in_set(string.ascii_lowercase)
-                not_is_lower = z3.Not(is_lower.z)
-                z3s_and.append(not_is_lower)
-            return zbool(self.context, z3.And([z3.And(z3s_and), z3.Or(z3s_or)]), self.v.isupper())
-        else:
-            return zbool(self.context, not_empty, False)
+        return self.in_set(string.ascii_uppercase)
 
     def rfind(self, sub: str, start: int = None, stop: int = None) -> zint:
         assert start is None, 'No need to handle this parameter'
