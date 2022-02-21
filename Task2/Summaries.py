@@ -55,28 +55,11 @@ class zstr(zstr):
         # Don't know what this line does 🤔
         self.context[1].append(z3.StringVal(empty) == result.z)
 
-        cdiff = (ord('a') - ord('A'))
         for index, i in enumerate(self):
-            oz = zord(self.context, i.z)
-            ov = ord(i.v)
             if index == 0:
-                uz = zchr(self.context, oz - cdiff)
-                rz = z3.And([oz >= ord('a'), oz <= ord('z')])
-                uv = chr(ov - cdiff)
-                rv = ord('a') <= ov <= ord('z')
-                if zbool(self.context, rz, rv):
-                    i = zstr(self.context, uz, uv)
-                else:
-                    i = zstr(self.context, i.z, i.v)
+                i = i.upper()
             else:
-                uz = zchr(self.context, oz + cdiff)
-                rz = z3.And([oz >= ord('A'), oz <= ord('Z')])
-                uv = chr(ov + cdiff)
-                rv = ord('A') <= ov <= ord('Z')
-                if zbool(self.context, rz, rv):
-                    i = zstr(self.context, uz, uv)
-                else:
-                    i = zstr(self.context, i.z, i.v)
+                i = i.lower()
             result += i
         return result
 
@@ -152,31 +135,13 @@ class zstr(zstr):
         ne = 'empty_%d' % fresh_name()
         result = zstr.create(self.context, ne, empty)
         self.context[1].append(z3.StringVal(empty) == result.z)
-        cdiff = (ord('a') - ord('A'))
-        for i in self:
-            oz = zord(self.context, i.z)
-            ov = ord(i.v)
 
-            rz_lower = z3.And([oz >= ord('A'), oz <= ord('Z')])
-            rz_upper = z3.And([oz >= ord('a'), oz <= ord('z')])
-
-            rv_lower = ord('A') <= ov <= ord('Z')
-            rv_upper = ord('a') <= ov <= ord('z')
-            if rv_lower:
-                if zbool(self.context, rz_lower, rv_lower):
-                    uz_lower = zchr(self.context, oz + cdiff)
-                    uv_lower = chr(ov + cdiff)
-                    i = zstr(self.context, uz_lower, uv_lower)
-            elif rv_upper:
-                if zbool(self.context, rz_upper, rv_upper):
-                    uz_upper = zchr(self.context, oz - cdiff)
-                    uv_upper = chr(ov - cdiff)
-                    i = zstr(self.context, uz_upper, uv_upper)
-            else:
-                i = zstr(self.context, i.z, i.v)
-
-            result = result + i
-        print(result)
+        for index, i in enumerate(self):
+            if i.isupper():
+                i = i.lower()
+            elif i.islower():
+                i = i.upper()
+            result += i
         return result
 
     def title(self) -> zstr:
