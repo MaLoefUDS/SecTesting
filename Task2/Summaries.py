@@ -154,48 +154,33 @@ class zstr(zstr):
         self.context[1].append(z3.StringVal(empty) == result.z)
         cdiff = (ord('a') - ord('A'))
 
-        new_word = True
+        pc = ""
         for index, i in enumerate(self):
-            oz = zord(self.context, i.z)
-            ov = ord(i.v)
-            # If the current character is a letter:
-            #   - If it is the first letter of a word, make it uppercase -> new_word = False
-            #   - If it is not the first letter of a word, make it lowercase
-            # Else:
-            #   - Do nothing -> new_word = True
-            #
-            # Bisher funktioniert das nicht, liegt eventuell wieder daran, dass die Constraint nicht "flexibel" sind
-
-            rz_letter = z3.Or(z3.And([oz >= ord('a'), oz <= ord('z')]),
-                              z3.And([oz >= ord('A'), oz <= ord('Z')]))
-            rv_letter = (ord('a') <= ov <= ord('z')) or (ord('A') <= ov <= ord('Z'))
-            if zbool(self.context, rz_letter, rv_letter):
-                if new_word:
-                    uz = zchr(self.context, oz - cdiff)
-                    rz = z3.And([oz >= ord('a'), oz <= ord('z')])
-                    uv = chr(ov - cdiff)
-                    rv = ord('a') <= ov <= ord('z')
-                    if zbool(self.context, rz, rv):
-                        i = zstr(self.context, uz, uv)
-                    else:
-                        i = zstr(self.context, i.z, i.v)
-                    new_word = False
-                else:
-                    uz = zchr(self.context, oz + cdiff)
-                    rz = z3.And([oz >= ord('A'), oz <= ord('Z')])
-                    uv = chr(ov + cdiff)
-                    rv = ord('A') <= ov <= ord('Z')
-                    if zbool(self.context, rz, rv):
-                        i = zstr(self.context, uz, uv)
-                    else:
-                        i = zstr(self.context, i.z, i.v)
+            if index == 0:
+                i = i.upper()
+                pc = i
             else:
-                i = zstr(self.context, i.z, i.v)
-                new_word = True
+                # Idea is to only "upper" the character, when the previous character is not alpha
+                # and the current character is lowercase
+                pc_oz = zord(self.context, pc.z)
 
-            result = result + i
+                pc_rz1 = z3.And([pc_oz >= ord('a'), pc_oz <= ord('z')])
+                pc_rz2 = z3.And([pc_oz >= ord('A'), pc_oz <= ord('Z')])
+                pc_rz = z3.Not(z3.Or([pc_rz1, pc_rz2]))
 
-        print(f"{self} -> {result}")
+                oz = zord(self.context, i.z)
+                uz = zchr(self.context, oz - cdiff)
+                rz_1 = z3.And([oz >= ord('a'), oz <= ord('z')])
+                rz = z3.And([pc_rz, rz_1])
+                ov = ord(i.v)
+                uv = chr(ov - cdiff)
+
+                if zbool(self.context, rz, not pc.v.isalpha() and i.v.islower()):
+                    i = zstr(self.context, uz, uv)
+                else:
+                    i = zstr(self.context, i.z, i.v)
+                pc = i
+            result += i
         return result
 
 
