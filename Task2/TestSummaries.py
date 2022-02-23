@@ -232,13 +232,6 @@ def test_summary_rfind():
     new_.fn_args = _.fn_args
 
     result = new_.zeval()
-    print(z3.simplify(new_.path[-1]))
-    print(new_.zeval())
-    print(z3.simplify(
-        z3.Not(
-            z3.IntVal(-1) == z3.LastIndexOf(
-                z3.StringVal('!0!'),
-                z3.StringVal('needle')))))
     if result[0] == 'sat' and 'needle' in result[1]['x'][0]:
         return True
     return False

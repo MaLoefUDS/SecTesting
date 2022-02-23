@@ -142,7 +142,19 @@ class zstr(zstr):
         assert start is None, 'No need to handle this parameter'
         assert stop is None, 'No need to handle this parameter'
         z, v = self._zv(sub)
-        return zint(self.context, z3.LastIndexOf(self.z, z), self.v.rfind(v))
+        length = z3.Length(self.z)
+        sub_length = z3.Length(z)
+        last = zint(self.context, length - sub_length, len(self) - len(sub))
+        while True:
+            index = zint(self.context, z3.IndexOf(self.z, z, last), self.v.find(v, last.v))
+            if index.v != -1:
+                break
+            last = last - 1
+            if last.v < 0:
+                break
+        return index
+
+
 
     def swapcase(self) -> zstr:
         # TODO fix this shit, constraints not working / solvable
