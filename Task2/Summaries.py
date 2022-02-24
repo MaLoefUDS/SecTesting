@@ -118,9 +118,8 @@ class zstr(zstr):
         return self.in_set(string.whitespace)
 
     def isupper(self) -> zbool:
-        # Return True if there is at least one uppercase alphabetic ASCII character in the sequence
-        # and no lowercase ASCII characters,
-        # False otherwise.
+        # Using not quite right-version as other version confuse z3 and produces weird unicode characters
+        """
         not_empty = self.length() > 0
         if not_empty:
             z3s_or1 = list()
@@ -136,7 +135,8 @@ class zstr(zstr):
             return zbool(self.context, z3.And([z3.Or(z3s_or1), z3.Not(z3.Or(z3s_or2))]), self.v.isupper())
         else:
             return zbool(self.context, not_empty, False)
-        #return self.in_set(string.ascii_uppercase)
+        """
+        return self.in_set(string.ascii_uppercase)
 
     def rfind(self, sub: str, start: int = None, stop: int = None) -> zint:
         assert start is None, 'No need to handle this parameter'
@@ -172,7 +172,6 @@ class zstr(zstr):
         return result
 
     def title(self) -> zstr:
-        # TODO fix this shit, constraints not working / solvable
         # Every word starts with a capital letter
         empty = ""
         ne = 'empty_%d' % fresh_name()
@@ -214,7 +213,7 @@ class zstr(zstr):
 def setup_summary():
     fuzzingbook.ConcolicFuzzer.__dict__['zstr'] = zstr
     fuzzingbook.ConcolicFuzzer.__dict__['zint'] = zint
-    fuzzingbook.ConcolicFuzzer.Z3_OPTIONS = '-T:5 encoding="ascii"'  # Set solver timeout to 5 seconds. Might be possible to reduce this given a strong CPU, or must be increased with a weak CPU.
+    fuzzingbook.ConcolicFuzzer.Z3_OPTIONS = '-T:5'  # Set solver timeout to 5 seconds. Might be possible to reduce this given a strong CPU, or must be increased with a weak CPU.
 
 
 if __name__ == "__main__":
